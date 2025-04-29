@@ -1,10 +1,39 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function Home() {
   const [input, setInput] = useState("");
   const [result, setResult] = useState(null);
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [showInstallButton, setShowInstallButton] = useState(false);
+
+  useEffect(() => {
+    const handler = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setShowInstallButton(true);
+    };
+
+    window.addEventListener("beforeinstallprompt", handler);
+
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handler);
+    };
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === "accepted") {
+      console.log("PWA 설치 성공");
+    } else {
+      console.log("PWA 설치 취소");
+    }
+    setDeferredPrompt(null);
+    setShowInstallButton(false);
+  };
 
   const handleInputChange = (e) => {
     setInput(e.target.value);
@@ -35,10 +64,18 @@ export default function Home() {
     }
   };
 
-
   return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-white p-6 text-center">
-        <h1 className="text-2xl md:text-3xl font-bold mb-8">오늘의 소확행 지수 ✨</h1>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-yellow-50 text-gray-900 p-6 text-center">
+      <h1 className="text-2xl md:text-3xl font-bold mb-8">오늘의 소확행 지수 ✨</h1>
+
+        {showInstallButton && (
+            <button
+                onClick={handleInstallClick}
+                className="mb-6 px-4 py-2 bg-green-400 rounded-full hover:bg-green-500 font-semibold transition text-lg"
+            >
+              앱 설치하기 📱
+            </button>
+        )}
 
         {!result && (
             <div className="flex flex-col items-center w-full max-w-md">
